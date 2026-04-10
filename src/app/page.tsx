@@ -224,7 +224,7 @@ export default function Home() {
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">📍</div>
               <h3 className="font-bold text-[#5C3A1E] mb-2">위치</h3>
-              <p className="text-[#8B5E3C] text-sm">주소를 입력해주세요</p>
+              <p className="text-[#8B5E3C] text-sm leading-relaxed">전남 목포시 소영길 23-6 1층<br /><span className="text-xs text-[#C8956C]">(용당동 1017-2)</span></p>
             </div>
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">🕐</div>
@@ -234,7 +234,7 @@ export default function Home() {
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">📞</div>
               <h3 className="font-bold text-[#5C3A1E] mb-2">문의</h3>
-              <p className="text-[#8B5E3C] text-sm">연락처를 입력해주세요</p>
+              <p className="text-[#8B5E3C] text-sm">0507-1368-3981</p>
             </div>
           </div>
         </section>
