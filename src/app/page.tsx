@@ -2,6 +2,8 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { Category, Menu, Setting } from "@/types";
 
+export const revalidate = 0; // 항상 최신 데이터 사용
+
 async function getData() {
   const [{ data: categories }, { data: menus }, { data: settings }] =
     await Promise.all([
