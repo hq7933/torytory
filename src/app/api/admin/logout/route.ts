@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
+  const res = NextResponse.redirect(new URL("/admin/login", process.env.NEXT_PUBLIC_SITE_URL ?? "https://torytory.vercel.app"));
   res.cookies.delete("admin_auth");
   return res;
 }
