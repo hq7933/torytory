@@ -1,71 +1,33 @@
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
+import type { Category, Menu, Setting } from "@/types";
 
-const menuItems = [
-  {
-    category: "두바이 시리즈",
-    color: "green",
-    items: [
-      {
-        name: "두바이 쫀득쿠키",
-        price: 5500,
-        description: "카다이프 반죽의 바삭한 식감, 피스타치오 필링",
-        emoji: "🟢",
-        soldOut: false,
-      },
-      {
-        name: "두바이 콰작볼",
-        price: 5000,
-        description: "한 입 쏙! 두바이 초콜릿 풍미의 동글동글 과자볼",
-        emoji: "🟢",
-        soldOut: false,
-      },
-      {
-        name: "흑임자 쫀득쿠키",
-        price: 4800,
-        description: "고소한 흑임자와 쫄깃한 쿠키의 만남",
-        emoji: "🖤",
-        soldOut: false,
-      },
-    ],
-  },
-  {
-    category: "시그니처 시리즈",
-    color: "amber",
-    items: [
-      {
-        name: "황치즈 뽀또",
-        price: 5500,
-        description: "진한 황금 치즈 크림이 가득 찬 촉촉한 보또",
-        emoji: "🧀",
-        soldOut: false,
-      },
-      {
-        name: "오레오",
-        price: 5500,
-        description: "바삭한 오레오와 부드러운 크림의 완벽한 조화",
-        emoji: "🍪",
-        soldOut: false,
-      },
-      {
-        name: "초코나무숲",
-        price: 5800,
-        description: "진한 초콜릿 크림과 촉촉한 케이크의 조화",
-        emoji: "🌲",
-        soldOut: true,
-      },
-      {
-        name: "엄마는 외계인",
-        price: 5800,
-        description: "얼큰한 마늘 풍미! 냉동으로 제공 • 얼떡 초리토딩",
-        emoji: "👾",
-        soldOut: false,
-        frozen: true,
-      },
-    ],
-  },
-];
+async function getData() {
+  const [{ data: categories }, { data: menus }, { data: settings }] =
+    await Promise.all([
+      supabase.from("categories").select("*").order("sort_order"),
+      supabase
+        .from("menus")
+        .select("*, categories(*)")
+        .eq("active", true)
+        .order("sort_order"),
+      supabase.from("settings").select("*"),
+    ]);
 
-export default function Home() {
+  const settingsMap = Object.fromEntries(
+    (settings ?? []).map((s: Setting) => [s.key, s.value ?? ""])
+  );
+
+  return {
+    categories: (categories ?? []) as Category[],
+    menus: (menus ?? []) as Menu[],
+    settings: settingsMap,
+  };
+}
+
+export default async function Home() {
+  const { categories, menus, settings } = await getData();
+
   return (
     <div className="flex flex-col min-h-screen bg-[#FDF6E9]">
       {/* Header */}
@@ -92,9 +54,15 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
+        {/* 공지사항 */}
+        {settings.notice && (
+          <div className="bg-[#F5C842] text-[#3D2314] text-center text-sm font-medium py-2.5 px-6">
+            📢 {settings.notice}
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF3C4] via-[#FDF6E9] to-[#EDD5BB] py-20 sm:py-32">
-          {/* Decorative blobs */}
           <div className="absolute top-10 right-10 w-48 h-48 bg-[#F5C842]/20 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#C8956C]/10 rounded-full blur-3xl" />
 
@@ -126,58 +94,75 @@ export default function Home() {
           </div>
 
           <div className="space-y-14">
-            {menuItems.map((section) => (
-              <div key={section.category}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div
-                    className={`w-2 h-8 rounded-full ${
-                      section.color === "green"
-                        ? "bg-green-500"
-                        : "bg-[#F5C842]"
-                    }`}
-                  />
-                  <h3 className="text-xl font-bold text-[#5C3A1E]">
-                    {section.category}
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {section.items.map((item) => (
+            {categories.map((category) => {
+              const categoryMenus = menus.filter(
+                (m) => m.category_id === category.id
+              );
+              if (categoryMenus.length === 0) return null;
+              return (
+                <div key={category.id}>
+                  <div className="flex items-center gap-3 mb-6">
                     <div
-                      key={item.name}
-                      className={`relative group rounded-2xl border p-6 transition-all duration-200 ${
-                        item.soldOut
-                          ? "bg-gray-50 border-gray-200 opacity-60"
-                          : "bg-white border-[#EDD5BB] hover:border-[#F5C842] hover:shadow-lg hover:-translate-y-1"
+                      className={`w-2 h-8 rounded-full ${
+                        category.color === "green" ? "bg-green-500" : "bg-[#F5C842]"
                       }`}
-                    >
-                      {item.soldOut && (
-                        <span className="absolute top-4 right-4 bg-gray-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                          품절
-                        </span>
-                      )}
-                      {item.frozen && (
-                        <span className="absolute top-4 right-4 bg-blue-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                          냉동제공
-                        </span>
-                      )}
+                    />
+                    <h3 className="text-xl font-bold text-[#5C3A1E]">
+                      {category.name}
+                    </h3>
+                  </div>
 
-                      <div className="text-4xl mb-4">{item.emoji}</div>
-                      <h4 className="font-bold text-[#3D2314] text-lg mb-1">
-                        {item.name}
-                      </h4>
-                      <p className="text-[#8B5E3C] text-sm mb-4 leading-relaxed">
-                        {item.description}
-                      </p>
-                      <p className="font-black text-[#E0A800] text-xl">
-                        {item.price.toLocaleString()}
-                        <span className="text-sm font-medium text-[#C8956C] ml-1">원</span>
-                      </p>
-                    </div>
-                  ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {categoryMenus.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`relative group rounded-2xl border p-6 transition-all duration-200 ${
+                          item.sold_out
+                            ? "bg-gray-50 border-gray-200 opacity-60"
+                            : "bg-white border-[#EDD5BB] hover:border-[#F5C842] hover:shadow-lg hover:-translate-y-1"
+                        }`}
+                      >
+                        {item.sold_out && (
+                          <span className="absolute top-4 right-4 bg-gray-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            품절
+                          </span>
+                        )}
+                        {item.frozen && !item.sold_out && (
+                          <span className="absolute top-4 right-4 bg-blue-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            냉동제공
+                          </span>
+                        )}
+
+                        {item.image_url ? (
+                          <div className="w-full h-36 rounded-xl overflow-hidden mb-4">
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-4xl mb-4">🍪</div>
+                        )}
+
+                        <h4 className="font-bold text-[#3D2314] text-lg mb-1">
+                          {item.name}
+                        </h4>
+                        {item.description && (
+                          <p className="text-[#8B5E3C] text-sm mb-4 leading-relaxed">
+                            {item.description}
+                          </p>
+                        )}
+                        <p className="font-black text-[#E0A800] text-xl">
+                          {item.price.toLocaleString()}
+                          <span className="text-sm font-medium text-[#C8956C] ml-1">원</span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -202,7 +187,7 @@ export default function Home() {
                 <div className="text-[#EDD5BB] text-sm mt-1">직접 제조</div>
               </div>
               <div>
-                <div className="text-3xl font-black text-[#F5C842]">7+</div>
+                <div className="text-3xl font-black text-[#F5C842]">{menus.length}+</div>
                 <div className="text-[#EDD5BB] text-sm mt-1">메뉴 종류</div>
               </div>
               <div>
@@ -224,17 +209,26 @@ export default function Home() {
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">📍</div>
               <h3 className="font-bold text-[#5C3A1E] mb-2">위치</h3>
-              <p className="text-[#8B5E3C] text-sm leading-relaxed">전남 목포시 소영길 23-6 1층<br /><span className="text-xs text-[#C8956C]">(용당동 1017-2)</span></p>
+              <p className="text-[#8B5E3C] text-sm leading-relaxed">
+                {settings.address || "주소를 입력해주세요"}
+                {settings.address_detail && (
+                  <><br /><span className="text-xs text-[#C8956C]">({settings.address_detail})</span></>
+                )}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">🕐</div>
               <h3 className="font-bold text-[#5C3A1E] mb-2">운영 시간</h3>
-              <p className="text-[#8B5E3C] text-sm">운영 시간을 입력해주세요</p>
+              <p className="text-[#8B5E3C] text-sm whitespace-pre-line">
+                {settings.open_hours || "운영 시간을 입력해주세요"}
+              </p>
             </div>
             <div className="bg-white rounded-2xl border border-[#EDD5BB] p-6 text-center">
               <div className="text-3xl mb-3">📞</div>
               <h3 className="font-bold text-[#5C3A1E] mb-2">문의</h3>
-              <p className="text-[#8B5E3C] text-sm">0507-1368-3981</p>
+              <p className="text-[#8B5E3C] text-sm">
+                {settings.phone || "연락처를 입력해주세요"}
+              </p>
             </div>
           </div>
         </section>
