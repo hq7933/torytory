@@ -95,7 +95,6 @@ export default function MenusClient({ initialMenus, categories }: Props) {
         await supabase.from("menus").insert({ ...payload, sort_order: menus.length + 1 });
       }
 
-      // 새로고침
       const { data } = await supabase.from("menus").select("*, categories(*)").order("sort_order");
       setMenus(data ?? []);
       setShowForm(false);
@@ -120,87 +119,81 @@ export default function MenusClient({ initialMenus, categories }: Props) {
   const filtered = filterCategory === "all" ? menus : menus.filter((m) => m.category_id === filterCategory);
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black text-gray-800">메뉴 관리</h1>
-        <button onClick={openNew} className="bg-[#E0A800] hover:bg-[#C89200] text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
+    <div className="p-4 sm:p-8">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-xl sm:text-2xl font-black text-gray-800">메뉴 관리</h1>
+        <button onClick={openNew} className="bg-[#E0A800] hover:bg-[#C89200] text-white font-bold px-4 py-2 rounded-xl text-sm transition-colors">
           + 메뉴 추가
         </button>
       </div>
 
       {/* 카테고리 필터 */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <button onClick={() => setFilterCategory("all")} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterCategory === "all" ? "bg-[#E0A800] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E0A800]"}`}>
+      <div className="flex gap-2 mb-5 flex-wrap">
+        <button onClick={() => setFilterCategory("all")} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filterCategory === "all" ? "bg-[#E0A800] text-white" : "bg-white border border-gray-200 text-gray-600"}`}>
           전체
         </button>
         {categories.map((c) => (
-          <button key={c.id} onClick={() => setFilterCategory(c.id)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterCategory === c.id ? "bg-[#E0A800] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E0A800]"}`}>
+          <button key={c.id} onClick={() => setFilterCategory(c.id)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filterCategory === c.id ? "bg-[#E0A800] text-white" : "bg-white border border-gray-200 text-gray-600"}`}>
             {c.name}
           </button>
         ))}
       </div>
 
-      {/* 메뉴 목록 */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="text-left px-5 py-3 text-gray-500 font-medium">메뉴명</th>
-              <th className="text-left px-5 py-3 text-gray-500 font-medium">카테고리</th>
-              <th className="text-right px-5 py-3 text-gray-500 font-medium">가격</th>
-              <th className="text-center px-5 py-3 text-gray-500 font-medium">품절</th>
-              <th className="text-center px-5 py-3 text-gray-500 font-medium">냉동</th>
-              <th className="text-center px-5 py-3 text-gray-500 font-medium">관리</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {filtered.map((menu) => (
-              <tr key={menu.id} className={`hover:bg-gray-50 ${!menu.active ? "opacity-40" : ""}`}>
-                <td className="px-5 py-4 font-medium text-gray-800">
-                  <div className="flex items-center gap-3">
-                    {menu.image_url && (
-                      <img src={menu.image_url} alt={menu.name} className="w-10 h-10 rounded-lg object-cover" />
-                    )}
-                    {menu.name}
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-gray-500">{(menu.categories as unknown as Category)?.name ?? "-"}</td>
-                <td className="px-5 py-4 text-right font-bold text-[#E0A800]">{menu.price.toLocaleString()}원</td>
-                <td className="px-5 py-4 text-center">
-                  <button
-                    onClick={() => toggleSoldOut(menu)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${menu.sold_out ? "bg-red-100 text-red-600 hover:bg-red-200" : "bg-green-100 text-green-600 hover:bg-green-200"}`}
-                  >
-                    {menu.sold_out ? "품절" : "판매중"}
-                  </button>
-                </td>
-                <td className="px-5 py-4 text-center">
-                  {menu.frozen ? <span className="text-blue-500">🧊</span> : <span className="text-gray-300">-</span>}
-                </td>
-                <td className="px-5 py-4 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => openEdit(menu)} className="text-gray-400 hover:text-[#E0A800] transition-colors text-lg">✏️</button>
-                    <button onClick={() => deleteMenu(menu.id)} className="text-gray-400 hover:text-red-500 transition-colors text-lg">🗑️</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-gray-400">메뉴가 없습니다.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* 메뉴 카드 목록 */}
+      <div className="space-y-3">
+        {filtered.map((menu) => (
+          <div key={menu.id} className={`bg-white rounded-2xl border border-gray-200 p-4 ${!menu.active ? "opacity-50" : ""}`}>
+            <div className="flex items-center gap-3">
+              {/* 이미지 */}
+              {menu.image_url ? (
+                <img src={menu.image_url} alt={menu.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-[#FFF3C4] flex items-center justify-center text-2xl flex-shrink-0">🍪</div>
+              )}
+
+              {/* 정보 */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-gray-800 text-sm">{menu.name}</span>
+                  {menu.frozen && <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">냉동</span>}
+                  {!menu.active && <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">비활성</span>}
+                </div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {(menu.categories as unknown as Category)?.name ?? "-"}
+                </div>
+                <div className="font-bold text-[#E0A800] text-sm mt-1">{menu.price.toLocaleString()}원</div>
+              </div>
+
+              {/* 우측 버튼들 */}
+              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                <button
+                  onClick={() => toggleSoldOut(menu)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${menu.sold_out ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}
+                >
+                  {menu.sold_out ? "품절" : "판매중"}
+                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => openEdit(menu)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-[#FFF3C4] transition-colors text-sm">✏️</button>
+                  <button onClick={() => deleteMenu(menu.id)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 transition-colors text-sm">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-14 text-gray-400">메뉴가 없습니다.</div>
+        )}
       </div>
 
       {/* 메뉴 추가/수정 모달 */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
-            <h2 className="text-lg font-black text-gray-800 mb-5">
-              {editId ? "메뉴 수정" : "메뉴 추가"}
-            </h2>
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-black text-gray-800">{editId ? "메뉴 수정" : "메뉴 추가"}</h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 text-2xl leading-none">×</button>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* 이미지 */}
               <div>
@@ -219,25 +212,25 @@ export default function MenusClient({ initialMenus, categories }: Props) {
               {/* 메뉴명 */}
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1.5">메뉴명 *</label>
-                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#F5C842]" placeholder="메뉴명을 입력하세요" />
+                <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5C842]" placeholder="메뉴명을 입력하세요" />
               </div>
 
               {/* 설명 */}
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1.5">설명</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#F5C842] resize-none" rows={2} placeholder="메뉴 설명" />
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5C842] resize-none" rows={2} placeholder="메뉴 설명" />
               </div>
 
               {/* 가격 */}
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1.5">가격 *</label>
-                <input required type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#F5C842]" placeholder="0" />
+                <input required type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5C842]" placeholder="0" />
               </div>
 
               {/* 카테고리 */}
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1.5">카테고리</label>
-                <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#F5C842]">
+                <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5C842]">
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -245,7 +238,7 @@ export default function MenusClient({ initialMenus, categories }: Props) {
               </div>
 
               {/* 토글들 */}
-              <div className="flex gap-6">
+              <div className="flex gap-5 flex-wrap">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.sold_out} onChange={(e) => setForm({ ...form, sold_out: e.target.checked })} className="w-4 h-4 accent-red-500" />
                   <span className="text-sm text-gray-600">품절</span>
@@ -261,10 +254,10 @@ export default function MenusClient({ initialMenus, categories }: Props) {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 text-gray-600 font-medium py-3 rounded-xl text-sm hover:bg-gray-50 transition-colors">
                   취소
                 </button>
-                <button type="submit" disabled={loading} className="flex-1 bg-[#E0A800] hover:bg-[#C89200] text-white font-bold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-50">
+                <button type="submit" disabled={loading} className="flex-1 bg-[#E0A800] hover:bg-[#C89200] text-white font-bold py-3 rounded-xl text-sm transition-colors disabled:opacity-50">
                   {loading ? "저장 중..." : "저장"}
                 </button>
               </div>
